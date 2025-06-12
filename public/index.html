@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Calendar App</title>
+    
+    <!-- FullCalendar CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        #calendar {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 8px;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+        
+        .close {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .close:hover {
+            color: #333;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        input[type="text"],
+        input[type="datetime-local"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        
+        .error-message {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>My Calendar</h1>
+        <div id="calendar"></div>
+    </div>
+    
+    <!-- Event Modal -->
+    <div id="eventModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="modalTitle">Add Event</h2>
+            <form id="eventForm">
+                <input type="hidden" id="eventId">
+                
+                <div class="form-group">
+                    <label for="title">Title *</label>
+                    <input type="text" id="title" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="location">Location</label>
+                    <input type="text" id="location">
+                </div>
+                
+                <div class="form-group">
+                    <label for="startTime">Start Time *</label>
+                    <input type="datetime-local" id="startTime" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="endTime">End Time *</label>
+                    <input type="datetime-local" id="endTime" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="status">Status</label>
+                    <select id="status">
+                        <option value="confirmed">Confirmed</option>
+                        <option value="tentative">Tentative</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="isAllDay"> All Day Event
+                    </label>
+                </div>
+                
+                <div id="errorMessage" class="error-message"></div>
+                
+                <div class="button-group">
+                    <button type="submit" class="btn-primary">Save Event</button>
+                    <button type="button" id="deleteBtn" class="btn-danger" style="display:none;">Delete Event</button>
+                    <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- FullCalendar JS -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+    
+    <script>
+        let calendar;
+        let currentEvent = null;
+        
+        // Initialize calendar when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            const calendarEl = document.getElementById('calendar');
+            
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                editable: true,
+                selectable: true,
+                selectMirror: true,
+                events: fetchEvents,
+                
+                // When user clicks on a date
+                dateClick: function(info) {
+                    openModal(null, info.dateStr);
+                },
+                
+                // When user clicks on an event
+                eventClick: function(info) {
+                    openModal(info.event);
+                },
+                
+                // When user drags an event
+                eventDrop: function(info) {
+                    updateEventTime(info.event);
+                },
+                
+                // When user resizes an event
+                eventResize: function(info) {
+                    updateEventTime(info.event);
+                }
+            });
+            
+            calendar.render();
+        });
+        
+        // Fetch events from server
+        async function fetchEvents(fetchInfo, successCallback, failureCallback) {
+            try {
+                const response = await fetch('/api/events');
+                const events = await response.json();
+                
+                // Convert events to FullCalendar format
+                const calendarEvents = events.map(event => ({
+                    id: event._id,
+                    title: event.title,
+                    start: event.startTime,
+                    end: event.endTime,
+                    allDay: event.isAllDay,
+                    extendedProps: {
+                        description: event.description,
+                        location: event.location,
+                        status: event.status
+                    }
+                }));
+                
+                successCallback(calendarEvents);
+            } catch (error) {
+                console.error('Error fetching events:', error);
+                failureCallback(error);
+            }
+        }
+        
+        // Open modal for creating/editing events
+        function openModal(event, dateStr) {
+            const modal = document.getElementById('eventModal');
+            const form = document.getElementById('eventForm');
+            const deleteBtn = document.getElementById('deleteBtn');
+            
+            currentEvent = event;
+            
+            if (event) {
+                // Edit mode
+                document.getElementById('modalTitle').textContent = 'Edit Event';
+                document.getElementById('eventId').value = event.id;
+                document.getElementById('title').value = event.title;
+                document.getElementById('description').value = event.extendedProps.description || '';
+                document.getElementById('location').value = event.extendedProps.location || '';
+                document.getElementById('startTime').value = formatDateTimeLocal(event.start);
+                document.getElementById('endTime').value = formatDateTimeLocal(event.end);
+                document.getElementById('status').value = event.extendedProps.status || 'confirmed';
+                document.getElementById('isAllDay').checked = event.allDay;
+                deleteBtn.style.display = 'inline-block';
+            } else {
+                // Create mode
+                document.getElementById('modalTitle').textContent = 'Add Event';
+                form.reset();
+                document.getElementById('eventId').value = '';
+                
+                if (dateStr) {
+                    const date = new Date(dateStr);
+                    const endDate = new Date(date);
+                    endDate.setHours(date.getHours() + 1);
+                    
+                    document.getElementById('startTime').value = formatDateTimeLocal(date);
+                    document.getElementById('endTime').value = formatDateTimeLocal(endDate);
+                }
+                
+                deleteBtn.style.display = 'none';
+            }
+            
+            document.getElementById('errorMessage').textContent = '';
+            modal.style.display = 'block';
+        }
+        
+        // Close modal
+        function closeModal() {
+            document.getElementById('eventModal').style.display = 'none';
+            currentEvent = null;
+        }
+        
+        // Format date for datetime-local input
+        function formatDateTimeLocal(date) {
+            const d = new Date(date);
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            const hours = String(d.getHours()).padStart(2, '0');
+            const minutes = String(d.getMinutes()).padStart(2, '0');
+            
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+        
+        // Handle form submission
+        document.getElementById('eventForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const eventId = document.getElementById('eventId').value;
+            const eventData = {
+                title: document.getElementById('title').value,
+                description: document.getElementById('description').value,
+                location: document.getElementById('location').value,
+                startTime: new Date(document.getElementById('startTime').value),
+                endTime: new Date(document.getElementById('endTime').value),
+                status: document.getElementById('status').value,
+                isAllDay: document.getElementById('isAllDay').checked
+            };
+            
+            try {
+                let response;
+                
+                if (eventId) {
+                    // Update existing event
+                    response = await fetch(`/api/events/${eventId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(eventData)
+                    });
+                } else {
+                    // Create new event
+                    response = await fetch('/api/events', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(eventData)
+                    });
+                }
+                
+                if (response.ok) {
+                    calendar.refetchEvents();
+                    closeModal();
+                } else {
+                    const error = await response.json();
+                    document.getElementById('errorMessage').textContent = error.error || 'An error occurred';
+                }
+            } catch (error) {
+                console.error('Error saving event:', error);
+                document.getElementById('errorMessage').textContent = 'Failed to save event';
+            }
+        });
+        
+        // Handle delete button
+        document.getElementById('deleteBtn').addEventListener('click', async function() {
+            if (!currentEvent || !confirm('Are you sure you want to delete this event?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/events/${currentEvent.id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    calendar.refetchEvents();
+                    closeModal();
+                } else {
+                    const error = await response.json();
+                    document.getElementById('errorMessage').textContent = error.error || 'Failed to delete event';
+                }
+            } catch (error) {
+                console.error('Error deleting event:', error);
+                document.getElementById('errorMessage').textContent = 'Failed to delete event';
+            }
+        });
+        
+        // Update event time when dragged/resized
+        async function updateEventTime(event) {
+            const eventData = {
+                startTime: event.start,
+                endTime: event.end || event.start,
+                isAllDay: event.allDay
+            };
+            
+            try {
+                const response = await fetch(`/api/events/${event.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(eventData)
+                });
+                
+                if (!response.ok) {
+                    event.revert();
+                    alert('Failed to update event');
+                }
+            } catch (error) {
+                console.error('Error updating event:', error);
+                event.revert();
+                alert('Failed to update event');
+            }
+        }
+        
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('eventModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>
