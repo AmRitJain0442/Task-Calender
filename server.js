@@ -18,6 +18,7 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://your-username:your
 
 // Option 2: Use local MongoDB
 // const MONGODB_URI = 'mongodb://localhost:27017/calendar_app';
+//i think apna compass la string works but other wont be able to read it 
 
 mongoose.connect(MONGODB_URI, {
   useNewUrlParser: true,
@@ -26,7 +27,7 @@ mongoose.connect(MONGODB_URI, {
 .then(() => console.log('Connected to MongoDB'))
 .catch(err => console.error('MongoDB connection error:', err));
 
-// Event Schema
+// Event Schema , this is what we decided on , jo optional h uska either default empty string kardo ya fir set default false 
 const eventSchema = new mongoose.Schema({
   calendarId: { type: mongoose.Schema.Types.ObjectId, required: true },
   ownerId: { type: mongoose.Schema.Types.ObjectId, required: true },
@@ -53,6 +54,7 @@ const eventSchema = new mongoose.Schema({
   }]
 }, { timestamps: true });
 
+//load mongoose 
 const Event = mongoose.model('Event', eventSchema);
 
 // Routes
