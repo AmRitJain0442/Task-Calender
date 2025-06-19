@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Calendar App</title>
+    <title>Calendar & Todo App</title>
     
     <!-- FullCalendar CSS -->
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
     <style>
         * {
@@ -16,29 +18,166 @@
         }
         
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
             padding: 20px;
         }
         
-        .container {
-            max-width: 1200px;
+        .main-container {
+            max-width: 1400px;
             margin: 0 auto;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+        }
+        
+        .sidebar {
             background-color: white;
             padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+        
+        .calendar-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
         }
         
         h1 {
-            color: #333;
-            margin-bottom: 20px;
+            color: #2d3436;
+            margin-bottom: 30px;
             text-align: center;
+            font-size: 2.5rem;
+            font-weight: 600;
+        }
+        
+        h2 {
+            color: #2d3436;
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+        
+        h3 {
+            color: #636e72;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+            font-weight: 500;
         }
         
         #calendar {
             max-width: 100%;
             margin: 0 auto;
+        }
+        
+        /* Todo List Styles */
+        .todo-section {
+            margin-bottom: 25px;
+        }
+        
+        .create-list-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .create-list-btn:hover {
+            background: linear-gradient(135deg, #0984e3, #74b9ff);
+            transform: translateY(-2px);
+        }
+        
+        .todo-lists {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .todo-list-item {
+            background: #f8f9fa;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #74b9ff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .todo-list-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+        
+        .todo-list-header {
+            padding: 12px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .todo-list-title {
+            font-weight: 600;
+            color: #2d3436;
+            margin: 0;
+        }
+        
+        .todo-list-count {
+            background: #74b9ff;
+            color: white;
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .todo-items-preview {
+            padding: 0 15px 12px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        
+        .todo-list-item.expanded .todo-items-preview {
+            max-height: 200px;
+        }
+        
+        .todo-item-mini {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 0;
+            font-size: 13px;
+            color: #636e72;
+        }
+        
+        .todo-item-mini.completed {
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+        
+        .search-box {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 15px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .search-box:focus {
+            outline: none;
+            border-color: #74b9ff;
         }
         
         /* Modal Styles */
@@ -51,28 +190,32 @@
             width: 100%;
             height: 100%;
             background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
         }
         
         .modal-content {
             background-color: white;
-            padding: 20px;
+            padding: 30px;
             width: 90%;
-            max-width: 500px;
-            border-radius: 8px;
+            max-width: 600px;
+            border-radius: 15px;
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-height: 80vh;
+            overflow-y: auto;
         }
         
         .close {
             position: absolute;
-            right: 10px;
-            top: 10px;
+            right: 15px;
+            top: 15px;
             font-size: 28px;
             cursor: pointer;
             color: #999;
+            transition: color 0.3s ease;
         }
         
         .close:hover {
@@ -80,25 +223,34 @@
         }
         
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
         
         label {
             display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #555;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2d3436;
         }
         
         input[type="text"],
         input[type="datetime-local"],
+        input[type="date"],
         textarea,
         select {
             width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
             font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+        
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #74b9ff;
         }
         
         textarea {
@@ -108,95 +260,242 @@
         
         .button-group {
             display: flex;
-            gap: 10px;
-            margin-top: 20px;
+            gap: 12px;
+            margin-top: 25px;
+            flex-wrap: wrap;
         }
         
         button {
-            padding: 10px 20px;
+            padding: 12px 24px;
             border: none;
-            border-radius: 4px;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 14px;
-            transition: background-color 0.3s;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
         
         .btn-primary {
-            background-color: #007bff;
+            background: linear-gradient(135deg, #00b894, #00a085);
             color: white;
         }
         
         .btn-primary:hover {
-            background-color: #0056b3;
+            background: linear-gradient(135deg, #00a085, #00b894);
+            transform: translateY(-2px);
         }
         
         .btn-danger {
-            background-color: #dc3545;
+            background: linear-gradient(135deg, #e17055, #d63031);
             color: white;
         }
         
         .btn-danger:hover {
-            background-color: #c82333;
+            background: linear-gradient(135deg, #d63031, #e17055);
+            transform: translateY(-2px);
         }
         
         .btn-secondary {
-            background-color: #6c757d;
+            background: #74b9ff;
             color: white;
         }
         
         .btn-secondary:hover {
-            background-color: #545b62;
+            background: #0984e3;
+            transform: translateY(-2px);
         }
         
         .error-message {
-            color: #dc3545;
+            color: #d63031;
             font-size: 14px;
-            margin-top: 5px;
+            margin-top: 8px;
+            padding: 8px 12px;
+            background: #fff5f5;
+            border-radius: 6px;
+            border-left: 3px solid #d63031;
+        }
+        
+        .success-message {
+            color: #00b894;
+            font-size: 14px;
+            margin-top: 8px;
+            padding: 8px 12px;
+            background: #f0fff4;
+            border-radius: 6px;
+            border-left: 3px solid #00b894;
+        }
+        
+        /* Todo List Assignment */
+        .list-assignment {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .assigned-lists {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .assigned-list-tag {
+            background: #74b9ff;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .remove-list {
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        /* Todo Items in Modal */
+        .todo-items-section {
+            margin-top: 20px;
+        }
+        
+        .todo-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border-left: 3px solid #ddd;
+        }
+        
+        .todo-item.completed {
+            opacity: 0.7;
+            text-decoration: line-through;
+            border-left-color: #00b894;
+        }
+        
+        .todo-item.high-priority {
+            border-left-color: #e17055;
+        }
+        
+        .todo-item.medium-priority {
+            border-left-color: #fdcb6e;
+        }
+        
+        .todo-item.low-priority {
+            border-left-color: #74b9ff;
+        }
+        
+        .add-item-form {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .add-item-input {
+            flex: 1;
+        }
+        
+        .quick-add-items {
+            margin-top: 15px;
+        }
+        
+        .items-textarea {
+            width: 100%;
+            min-height: 100px;
+            margin-bottom: 10px;
+        }
+        
+        .items-help {
+            font-size: 12px;
+            color: #636e72;
+            margin-bottom: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                position: static;
+                order: 2;
+            }
+            
+            .calendar-container {
+                order: 1;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>My Calendar</h1>
-        <div id="calendar"></div>
+    <h1><i class="fas fa-calendar-alt"></i> Calendar & Todo App</h1>
+    
+    <div class="main-container">
+        <!-- Sidebar with Todo Lists -->
+        <div class="sidebar">
+            <div class="todo-section">
+                <h2><i class="fas fa-list-check"></i> Todo Lists</h2>
+                <button class="create-list-btn" onclick="openTodoListModal()">
+                    <i class="fas fa-plus"></i> Create New List
+                </button>
+                
+                <input type="text" class="search-box" id="searchTodoLists" placeholder="Search lists..." onkeyup="searchTodoLists()">
+                
+                <div class="todo-lists" id="todoListsContainer">
+                    <!-- Todo lists will be populated here -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Calendar Area -->
+        <div class="calendar-container">
+            <div id="calendar"></div>
+        </div>
     </div>
     
     <!-- Event Modal -->
     <div id="eventModal" class="modal">
         <div class="modal-content">
-            <span class="close" onclick="closeModal()">&times;</span>
-            <h2 id="modalTitle">Add Event</h2>
+            <span class="close" onclick="closeModal('eventModal')">&times;</span>
+            <h2 id="eventModalTitle">Add Event</h2>
             <form id="eventForm">
                 <input type="hidden" id="eventId">
                 
                 <div class="form-group">
-                    <label for="title">Title *</label>
-                    <input type="text" id="title" required>
+                    <label for="eventTitle">Title *</label>
+                    <input type="text" id="eventTitle" required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="description">Description</label>
-                    <textarea id="description"></textarea>
+                    <label for="eventDescription">Description</label>
+                    <textarea id="eventDescription"></textarea>
                 </div>
                 
                 <div class="form-group">
-                    <label for="location">Location</label>
-                    <input type="text" id="location">
+                    <label for="eventLocation">Location</label>
+                    <input type="text" id="eventLocation">
                 </div>
                 
                 <div class="form-group">
-                    <label for="startTime">Start Time *</label>
-                    <input type="datetime-local" id="startTime" required>
+                    <label for="eventStartTime">Start Time *</label>
+                    <input type="datetime-local" id="eventStartTime" required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="endTime">End Time *</label>
-                    <input type="datetime-local" id="endTime" required>
+                    <label for="eventEndTime">End Time *</label>
+                    <input type="datetime-local" id="eventEndTime" required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="status">Status</label>
-                    <select id="status">
+                    <label for="eventStatus">Status</label>
+                    <select id="eventStatus">
                         <option value="confirmed">Confirmed</option>
                         <option value="tentative">Tentative</option>
                         <option value="cancelled">Cancelled</option>
@@ -205,16 +504,103 @@
                 
                 <div class="form-group">
                     <label>
-                        <input type="checkbox" id="isAllDay"> All Day Event
+                        <input type="checkbox" id="eventIsAllDay"> All Day Event
                     </label>
                 </div>
                 
-                <div id="errorMessage" class="error-message"></div>
+                <!-- Todo List Assignment -->
+                <div class="list-assignment">
+                    <h3><i class="fas fa-link"></i> Assign Todo Lists</h3>
+                    <select id="availableListsSelect">
+                        <option value="">Select a list to assign...</option>
+                    </select>
+                    <button type="button" onclick="assignListToEvent()" class="btn-secondary" style="margin-top: 10px;">
+                        <i class="fas fa-plus"></i> Assign List
+                    </button>
+                    <div class="assigned-lists" id="assignedLists"></div>
+                </div>
+                
+                <div id="eventErrorMessage" class="error-message" style="display: none;"></div>
                 
                 <div class="button-group">
-                    <button type="submit" class="btn-primary">Save Event</button>
-                    <button type="button" id="deleteBtn" class="btn-danger" style="display:none;">Delete Event</button>
-                    <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save"></i> Save Event
+                    </button>
+                    <button type="button" id="deleteEventBtn" class="btn-danger" style="display:none;">
+                        <i class="fas fa-trash"></i> Delete Event
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="closeModal('eventModal')">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Todo List Modal -->
+    <div id="todoListModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('todoListModal')">&times;</span>
+            <h2 id="todoListModalTitle">Create Todo List</h2>
+            <form id="todoListForm">
+                <input type="hidden" id="todoListId">
+                
+                <div class="form-group">
+                    <label for="todoListTitle">List Title *</label>
+                    <input type="text" id="todoListTitle" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="todoListDescription">Description</label>
+                    <textarea id="todoListDescription"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="todoListColor">Color</label>
+                    <input type="color" id="todoListColor" value="#74b9ff">
+                </div>
+                
+                <!-- Quick Add Items -->
+                <div class="quick-add-items">
+                    <h3><i class="fas fa-tasks"></i> Add Items</h3>
+                    <div class="items-help">
+                        Add items one per line, or use the form below to add items individually with priorities.
+                    </div>
+                    <textarea class="items-textarea" id="bulkItems" placeholder="Enter items, one per line...&#10;Example:&#10;Review project proposal&#10;Call client about meeting&#10;Prepare presentation slides"></textarea>
+                    <button type="button" onclick="addBulkItems()" class="btn-secondary">
+                        <i class="fas fa-plus-circle"></i> Add All Items
+                    </button>
+                </div>
+                
+                <!-- Individual Item Addition -->
+                <div class="todo-items-section">
+                    <h3><i class="fas fa-list"></i> Todo Items</h3>
+                    <div class="add-item-form">
+                        <input type="text" class="add-item-input" id="newItemText" placeholder="Add new item...">
+                        <select id="newItemPriority">
+                            <option value="low">Low</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                        <button type="button" onclick="addTodoItem()" class="btn-primary">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                    <div id="todoItemsList"></div>
+                </div>
+                
+                <div id="todoListErrorMessage" class="error-message" style="display: none;"></div>
+                
+                <div class="button-group">
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save"></i> Save List
+                    </button>
+                    <button type="button" id="deleteTodoListBtn" class="btn-danger" style="display:none;">
+                        <i class="fas fa-trash"></i> Delete List
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="closeModal('todoListModal')">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
                 </div>
             </form>
         </div>
@@ -226,9 +612,22 @@
     <script>
         let calendar;
         let currentEvent = null;
+        let currentTodoList = null;
+        let todoLists = [];
+        let tempTodoItems = [];
+        const API_BASE = "http://localhost:3000";
         
-        // Initialize calendar when page loads
+        // Initialize application
         document.addEventListener('DOMContentLoaded', function() {
+            initializeCalendar();
+            loadTodoLists();
+        });
+        
+        // ================================
+        // CALENDAR FUNCTIONS
+        // ================================
+        
+        function initializeCalendar() {
             const calendarEl = document.getElementById('calendar');
             
             calendar = new FullCalendar.Calendar(calendarEl, {
@@ -243,37 +642,31 @@
                 selectMirror: true,
                 events: fetchEvents,
                 
-                // When user clicks on a date
                 dateClick: function(info) {
-                    openModal(null, info.dateStr);
+                    openEventModal(null, info.dateStr);
                 },
                 
-                // When user clicks on an event
                 eventClick: function(info) {
-                    openModal(info.event);
+                    openEventModal(info.event);
                 },
                 
-                // When user drags an event
                 eventDrop: function(info) {
                     updateEventTime(info.event);
                 },
                 
-                // When user resizes an event
                 eventResize: function(info) {
                     updateEventTime(info.event);
                 }
             });
             
             calendar.render();
-        });
+        }
         
-        // Fetch events from server
         async function fetchEvents(fetchInfo, successCallback, failureCallback) {
             try {
-                const response = await fetch('/api/events');
+                const response = await fetch(`${API_BASE}/api/events`);
                 const events = await response.json();
                 
-                // Convert events to FullCalendar format
                 const calendarEvents = events.map(event => ({
                     id: event._id,
                     title: event.title,
@@ -283,7 +676,8 @@
                     extendedProps: {
                         description: event.description,
                         location: event.location,
-                        status: event.status
+                        status: event.status,
+                        todoLists: event.todoLists || []
                     }
                 }));
                 
@@ -294,29 +688,31 @@
             }
         }
         
-        // Open modal for creating/editing events
-        function openModal(event, dateStr) {
+        function openEventModal(event, dateStr) {
             const modal = document.getElementById('eventModal');
             const form = document.getElementById('eventForm');
-            const deleteBtn = document.getElementById('deleteBtn');
+            const deleteBtn = document.getElementById('deleteEventBtn');
             
             currentEvent = event;
             
             if (event) {
                 // Edit mode
-                document.getElementById('modalTitle').textContent = 'Edit Event';
+                document.getElementById('eventModalTitle').textContent = 'Edit Event';
                 document.getElementById('eventId').value = event.id;
-                document.getElementById('title').value = event.title;
-                document.getElementById('description').value = event.extendedProps.description || '';
-                document.getElementById('location').value = event.extendedProps.location || '';
-                document.getElementById('startTime').value = formatDateTimeLocal(event.start);
-                document.getElementById('endTime').value = formatDateTimeLocal(event.end);
-                document.getElementById('status').value = event.extendedProps.status || 'confirmed';
-                document.getElementById('isAllDay').checked = event.allDay;
+                document.getElementById('eventTitle').value = event.title;
+                document.getElementById('eventDescription').value = event.extendedProps.description || '';
+                document.getElementById('eventLocation').value = event.extendedProps.location || '';
+                document.getElementById('eventStartTime').value = formatDateTimeLocal(event.start);
+                document.getElementById('eventEndTime').value = formatDateTimeLocal(event.end);
+                document.getElementById('eventStatus').value = event.extendedProps.status || 'confirmed';
+                document.getElementById('eventIsAllDay').checked = event.allDay;
                 deleteBtn.style.display = 'inline-block';
+                
+                // Load assigned todo lists
+                loadAssignedLists(event.extendedProps.todoLists);
             } else {
                 // Create mode
-                document.getElementById('modalTitle').textContent = 'Add Event';
+                document.getElementById('eventModalTitle').textContent = 'Add Event';
                 form.reset();
                 document.getElementById('eventId').value = '';
                 
@@ -325,24 +721,441 @@
                     const endDate = new Date(date);
                     endDate.setHours(date.getHours() + 1);
                     
-                    document.getElementById('startTime').value = formatDateTimeLocal(date);
-                    document.getElementById('endTime').value = formatDateTimeLocal(endDate);
+                    document.getElementById('eventStartTime').value = formatDateTimeLocal(date);
+                    document.getElementById('eventEndTime').value = formatDateTimeLocal(endDate);
                 }
                 
                 deleteBtn.style.display = 'none';
+                clearAssignedLists();
             }
             
-            document.getElementById('errorMessage').textContent = '';
+            // Load available todo lists for assignment
+            loadAvailableListsForAssignment();
+            
+            document.getElementById('eventErrorMessage').style.display = 'none';
             modal.style.display = 'block';
         }
         
-        // Close modal
-        function closeModal() {
-            document.getElementById('eventModal').style.display = 'none';
-            currentEvent = null;
+        // ================================
+        // TODO LIST FUNCTIONS
+        // ================================
+        
+        async function loadTodoLists() {
+            try {
+                const response = await fetch(`${API_BASE}/api/todolists`);
+                todoLists = await response.json();
+                renderTodoLists();
+            } catch (error) {
+                console.error('Error loading todo lists:', error);
+            }
         }
         
-        // Format date for datetime-local input
+        function renderTodoLists() {
+            const container = document.getElementById('todoListsContainer');
+            container.innerHTML = '';
+            
+            todoLists.forEach(list => {
+                const listElement = createTodoListElement(list);
+                container.appendChild(listElement);
+            });
+        }
+        
+        function createTodoListElement(list) {
+            const div = document.createElement('div');
+            div.className = 'todo-list-item';
+            div.dataset.listId = list._id;
+            
+            const completedCount = list.items.filter(item => item.completed).length;
+            const totalCount = list.items.length;
+            
+            div.innerHTML = `
+                <div class="todo-list-header" onclick="toggleTodoList('${list._id}')">
+                    <h4 class="todo-list-title" style="border-left-color: ${list.color}">
+                        ${list.title}
+                    </h4>
+                    <span class="todo-list-count">${completedCount}/${totalCount}</span>
+                </div>
+                <div class="todo-items-preview">
+                    ${list.items.slice(0, 5).map(item => `
+                        <div class="todo-item-mini ${item.completed ? 'completed' : ''}">
+                            <i class="fas fa-${item.completed ? 'check-circle' : 'circle'}"></i>
+                            ${item.text}
+                        </div>
+                    `).join('')}
+                    ${list.items.length > 5 ? `<div class="todo-item-mini">... and ${list.items.length - 5} more</div>` : ''}
+                    <button onclick="openTodoListModal('${list._id}')" class="btn-secondary" style="margin-top: 10px; font-size: 12px; padding: 6px 12px;">
+                        <i class="fas fa-edit"></i> Edit List
+                    </button>
+                </div>
+            `;
+            
+            return div;
+        }
+        
+        function toggleTodoList(listId) {
+            const element = document.querySelector(`[data-list-id="${listId}"]`);
+            element.classList.toggle('expanded');
+        }
+        
+        function openTodoListModal(listId = null) {
+            const modal = document.getElementById('todoListModal');
+            const form = document.getElementById('todoListForm');
+            const deleteBtn = document.getElementById('deleteTodoListBtn');
+            
+            currentTodoList = listId ? todoLists.find(list => list._id === listId) : null;
+            tempTodoItems = [];
+            
+            if (currentTodoList) {
+                // Edit mode
+                document.getElementById('todoListModalTitle').textContent = 'Edit Todo List';
+                document.getElementById('todoListId').value = currentTodoList._id;
+                document.getElementById('todoListTitle').value = currentTodoList.title;
+                document.getElementById('todoListDescription').value = currentTodoList.description || '';
+                document.getElementById('todoListColor').value = currentTodoList.color || '#74b9ff';
+                tempTodoItems = [...currentTodoList.items];
+                deleteBtn.style.display = 'inline-block';
+            } else {
+                // Create mode
+                document.getElementById('todoListModalTitle').textContent = 'Create Todo List';
+                form.reset();
+                document.getElementById('todoListId').value = '';
+                document.getElementById('todoListColor').value = '#74b9ff';
+                deleteBtn.style.display = 'none';
+            }
+            
+            document.getElementById('bulkItems').value = '';
+            renderTodoItems();
+            document.getElementById('todoListErrorMessage').style.display = 'none';
+            modal.style.display = 'block';
+        }
+        
+        function addTodoItem() {
+            const text = document.getElementById('newItemText').value.trim();
+            const priority = document.getElementById('newItemPriority').value;
+            
+            if (!text) return;
+            
+            tempTodoItems.push({
+                text: text,
+                priority: priority,
+                completed: false,
+                _id: 'temp_' + Date.now() // Temporary ID
+            });
+            
+            document.getElementById('newItemText').value = '';
+            renderTodoItems();
+        }
+        
+        function addBulkItems() {
+            const bulkText = document.getElementById('bulkItems').value.trim();
+            if (!bulkText) return;
+            
+            const items = bulkText.split('\n').filter(line => line.trim());
+            items.forEach(text => {
+                tempTodoItems.push({
+                    text: text.trim(),
+                    priority: 'medium',
+                    completed: false,
+                    _id: 'temp_' + Date.now() + Math.random()
+                });
+            });
+            
+            document.getElementById('bulkItems').value = '';
+            renderTodoItems();
+        }
+        
+        function renderTodoItems() {
+            const container = document.getElementById('todoItemsList');
+            container.innerHTML = '';
+            
+            tempTodoItems.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = `todo-item ${item.completed ? 'completed' : ''} ${item.priority}-priority`;
+                div.innerHTML = `
+                    <input type="checkbox" ${item.completed ? 'checked' : ''} 
+                           onchange="toggleTodoItem(${index})">
+                    <span>${item.text}</span>
+                    <span class="priority-badge" style="margin-left: auto; padding: 2px 6px; border-radius: 10px; font-size: 10px; background: ${getPriorityColor(item.priority)}; color: white;">
+                        ${item.priority.toUpperCase()}
+                    </span>
+                    <button onclick="removeTodoItem(${index})" class="btn-danger" style="margin-left: 10px; padding: 4px 8px; font-size: 12px;">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                `;
+                container.appendChild(div);
+            });
+        }
+        
+        function toggleTodoItem(index) {
+            tempTodoItems[index].completed = !tempTodoItems[index].completed;
+            renderTodoItems();
+        }
+        
+        function removeTodoItem(index) {
+            tempTodoItems.splice(index, 1);
+            renderTodoItems();
+        }
+        
+        function getPriorityColor(priority) {
+            switch (priority) {
+                case 'high': return '#e17055';
+                case 'medium': return '#fdcb6e';
+                case 'low': return '#74b9ff';
+                default: return '#ddd';
+            }
+        }
+        
+        // ================================
+        // EVENT-LIST ASSIGNMENT FUNCTIONS
+        // ================================
+        
+        function loadAvailableListsForAssignment() {
+            const select = document.getElementById('availableListsSelect');
+            select.innerHTML = '<option value="">Select a list to assign...</option>';
+            
+            todoLists.forEach(list => {
+                const option = document.createElement('option');
+                option.value = list._id;
+                option.textContent = list.title;
+                select.appendChild(option);
+            });
+        }
+        
+        function loadAssignedLists(assignedLists) {
+            const container = document.getElementById('assignedLists');
+            container.innerHTML = '';
+            
+            assignedLists.forEach(list => {
+                const tag = document.createElement('div');
+                tag.className = 'assigned-list-tag';
+                tag.innerHTML = `
+                    ${list.title}
+                    <span class="remove-list" onclick="removeAssignedList('${list._id}')">&times;</span>
+                `;
+                container.appendChild(tag);
+            });
+        }
+        
+        function clearAssignedLists() {
+            document.getElementById('assignedLists').innerHTML = '';
+        }
+        
+        async function assignListToEvent() {
+            const select = document.getElementById('availableListsSelect');
+            const listId = select.value;
+            
+            if (!listId) return;
+            
+            if (currentEvent) {
+                // If editing existing event, assign immediately
+                try {
+                    const response = await fetch(`${API_BASE}/api/events/${currentEvent.id}/assign-list/${listId}`, {
+                        method: 'POST'
+                    });
+                    
+                    if (response.ok) {
+                        const updatedEvent = await response.json();
+                        loadAssignedLists(updatedEvent.todoLists);
+                        calendar.refetchEvents();
+                    }
+                } catch (error) {
+                    console.error('Error assigning list:', error);
+                }
+            } else {
+                // If creating new event, just add to UI (will be saved with event)
+                const list = todoLists.find(l => l._id === listId);
+                if (list) {
+                    const container = document.getElementById('assignedLists');
+                    const tag = document.createElement('div');
+                    tag.className = 'assigned-list-tag';
+                    tag.dataset.listId = listId;
+                    tag.innerHTML = `
+                        ${list.title}
+                        <span class="remove-list" onclick="removeAssignedListFromNew('${listId}')">&times;</span>
+                    `;
+                    container.appendChild(tag);
+                }
+            }
+            
+            select.value = '';
+        }
+        
+        async function removeAssignedList(listId) {
+            if (currentEvent) {
+                try {
+                    const response = await fetch(`${API_BASE}/api/events/${currentEvent.id}/remove-list/${listId}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    if (response.ok) {
+                        const updatedEvent = await response.json();
+                        loadAssignedLists(updatedEvent.todoLists);
+                        calendar.refetchEvents();
+                    }
+                } catch (error) {
+                    console.error('Error removing list:', error);
+                }
+            }
+        }
+        
+        function removeAssignedListFromNew(listId) {
+            const tag = document.querySelector(`[data-list-id="${listId}"]`);
+            if (tag) tag.remove();
+        }
+        
+        // ================================
+        // FORM HANDLERS
+        // ================================
+        
+        // Event form submission
+        document.getElementById('eventForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const eventId = document.getElementById('eventId').value;
+            const eventData = {
+                title: document.getElementById('eventTitle').value,
+                description: document.getElementById('eventDescription').value,
+                location: document.getElementById('eventLocation').value,
+                startTime: new Date(document.getElementById('eventStartTime').value),
+                endTime: new Date(document.getElementById('eventEndTime').value),
+                status: document.getElementById('eventStatus').value,
+                isAllDay: document.getElementById('eventIsAllDay').checked
+            };
+            
+            // Get assigned lists for new events
+            if (!eventId) {
+                const assignedTags = document.querySelectorAll('#assignedLists .assigned-list-tag');
+                eventData.todoLists = Array.from(assignedTags).map(tag => tag.dataset.listId).filter(Boolean);
+            }
+            
+            try {
+                let response;
+                
+                if (eventId) {
+                    response = await fetch(`${API_BASE}/api/events/${eventId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(eventData)
+                    });
+                } else {
+                    response = await fetch(`${API_BASE}/api/events`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(eventData)
+                    });
+                }
+                
+                if (response.ok) {
+                    calendar.refetchEvents();
+                    closeModal('eventModal');
+                } else {
+                    const error = await response.json();
+                    showError('eventErrorMessage', error.error || 'An error occurred');
+                }
+            } catch (error) {
+                console.error('Error saving event:', error);
+                showError('eventErrorMessage', 'Failed to save event');
+            }
+        });
+        
+        // Todo list form submission
+        document.getElementById('todoListForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const listId = document.getElementById('todoListId').value;
+            const listData = {
+                title: document.getElementById('todoListTitle').value,
+                description: document.getElementById('todoListDescription').value,
+                color: document.getElementById('todoListColor').value,
+                items: tempTodoItems.map(item => ({
+                    text: item.text,
+                    priority: item.priority,
+                    completed: item.completed,
+                    notes: item.notes || ''
+                }))
+            };
+            
+            try {
+                let response;
+                
+                if (listId) {
+                    response = await fetch(`${API_BASE}/api/todolists/${listId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(listData)
+                    });
+                } else {
+                    response = await fetch(`${API_BASE}/api/todolists`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(listData)
+                    });
+                }
+                
+                if (response.ok) {
+                    await loadTodoLists();
+                    closeModal('todoListModal');
+                } else {
+                    const error = await response.json();
+                    showError('todoListErrorMessage', error.error || 'An error occurred');
+                }
+            } catch (error) {
+                console.error('Error saving todo list:', error);
+                showError('todoListErrorMessage', 'Failed to save todo list');
+            }
+        });
+        
+        // Delete handlers
+        document.getElementById('deleteEventBtn').addEventListener('click', async function() {
+            if (!currentEvent || !confirm('Are you sure you want to delete this event?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/events/${currentEvent.id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    calendar.refetchEvents();
+                    closeModal('eventModal');
+                } else {
+                    const error = await response.json();
+                    showError('eventErrorMessage', error.error || 'Failed to delete event');
+                }
+            } catch (error) {
+                console.error('Error deleting event:', error);
+                showError('eventErrorMessage', 'Failed to delete event');
+            }
+        });
+        
+        document.getElementById('deleteTodoListBtn').addEventListener('click', async function() {
+            if (!currentTodoList || !confirm('Are you sure you want to delete this todo list?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/todolists/${currentTodoList._id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    await loadTodoLists();
+                    closeModal('todoListModal');
+                } else {
+                    const error = await response.json();
+                    showError('todoListErrorMessage', error.error || 'Failed to delete todo list');
+                }
+            } catch (error) {
+                console.error('Error deleting todo list:', error);
+                showError('todoListErrorMessage', 'Failed to delete todo list');
+            }
+        });
+        
+        // ================================
+        // UTILITY FUNCTIONS
+        // ================================
+        
         function formatDateTimeLocal(date) {
             const d = new Date(date);
             const year = d.getFullYear();
@@ -354,78 +1167,6 @@
             return `${year}-${month}-${day}T${hours}:${minutes}`;
         }
         
-        // Handle form submission
-        document.getElementById('eventForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const eventId = document.getElementById('eventId').value;
-            const eventData = {
-                title: document.getElementById('title').value,
-                description: document.getElementById('description').value,
-                location: document.getElementById('location').value,
-                startTime: new Date(document.getElementById('startTime').value),
-                endTime: new Date(document.getElementById('endTime').value),
-                status: document.getElementById('status').value,
-                isAllDay: document.getElementById('isAllDay').checked
-            };
-            
-            try {
-                let response;
-                
-                if (eventId) {
-                    // Update existing event
-                    response = await fetch(`/api/events/${eventId}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(eventData)
-                    });
-                } else {
-                    // Create new event
-                    response = await fetch('/api/events', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(eventData)
-                    });
-                }
-                
-                if (response.ok) {
-                    calendar.refetchEvents();
-                    closeModal();
-                } else {
-                    const error = await response.json();
-                    document.getElementById('errorMessage').textContent = error.error || 'An error occurred';
-                }
-            } catch (error) {
-                console.error('Error saving event:', error);
-                document.getElementById('errorMessage').textContent = 'Failed to save event';
-            }
-        });
-        
-        // Handle delete button
-        document.getElementById('deleteBtn').addEventListener('click', async function() {
-            if (!currentEvent || !confirm('Are you sure you want to delete this event?')) {
-                return;
-            }
-            
-            try {
-                const response = await fetch(`/api/events/${currentEvent.id}`, {
-                    method: 'DELETE'
-                });
-                
-                if (response.ok) {
-                    calendar.refetchEvents();
-                    closeModal();
-                } else {
-                    const error = await response.json();
-                    document.getElementById('errorMessage').textContent = error.error || 'Failed to delete event';
-                }
-            } catch (error) {
-                console.error('Error deleting event:', error);
-                document.getElementById('errorMessage').textContent = 'Failed to delete event';
-            }
-        });
-        
-        // Update event time when dragged/resized
         async function updateEventTime(event) {
             const eventData = {
                 startTime: event.start,
@@ -434,7 +1175,7 @@
             };
             
             try {
-                const response = await fetch(`/api/events/${event.id}`, {
+                const response = await fetch(`${API_BASE}/api/events/${event.id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(eventData)
@@ -451,13 +1192,49 @@
             }
         }
         
-        // Close modal when clicking outside
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+            currentEvent = null;
+            currentTodoList = null;
+            tempTodoItems = [];
+        }
+        
+        function showError(elementId, message) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.style.display = 'block';
+        }
+        
+        function searchTodoLists() {
+            const query = document.getElementById('searchTodoLists').value.toLowerCase();
+            const listElements = document.querySelectorAll('.todo-list-item');
+            
+            listElements.forEach(element => {
+                const title = element.querySelector('.todo-list-title').textContent.toLowerCase();
+                if (title.includes(query)) {
+                    element.style.display = 'block';
+                } else {
+                    element.style.display = 'none';
+                }
+            });
+        }
+        
+        // Close modals when clicking outside
         window.onclick = function(event) {
-            const modal = document.getElementById('eventModal');
-            if (event.target === modal) {
-                closeModal();
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+                currentEvent = null;
+                currentTodoList = null;
+                tempTodoItems = [];
             }
         }
+        
+        // Allow Enter key to add todo items
+        document.getElementById('newItemText').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addTodoItem();
+            }
+        });
     </script>
 </body>
 </html>
